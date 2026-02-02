@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:macro name="uf850_ros2_control" params="prefix
+  <xacro:macro name="uf850_ros2_control"
+    params="prefix
     velocity_control:='false'
     ros2_control_plugin:='uf_robot_hardware/UFRobotSystemHardware'
     hw_ns:='xarm' add_gripper:='false' add_bio_gripper:='false'
@@ -138,6 +139,45 @@
         </state_interface>
         <!-- <state_interface name="effort"/> -->
       </joint>
+
+      <!-- <hardware>
+              <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+            </hardware> -->
+
+      <joint name="joint_wheel_front_left">
+        <command_interface name="velocity">
+          <param name="min">-1</param>
+          <param name="max">1</param>
+        </command_interface>
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
+      <joint name="joint_wheel_front_right">
+        <command_interface name="velocity">
+          <param name="min">-1</param>
+          <param name="max">1</param>
+        </command_interface>
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
+      <joint name="joint_wheel_back_left">
+        <command_interface name="velocity">
+          <param name="min">-1</param>
+          <param name="max">1</param>
+        </command_interface>
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
+      <joint name="joint_wheel_back_right">
+        <command_interface name="velocity">
+          <param name="min">-1</param>
+          <param name="max">1</param>
+        </command_interface>
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
+
+
     </ros2_control>
   </xacro:macro>
 </robot>
