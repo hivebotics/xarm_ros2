@@ -38,12 +38,12 @@
           iyy="0.0064375" iyz="-4.2181E-07" izz="0.0048631" />
       </inertial>
       <xacro:common_link_visual 
-        mesh_filename="uf850/visual/link_base"  
+        mesh_filename="uf850/collision/link_base_low"  
         origin_xyz="0 0 0" 
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
       <xacro:common_link_collision 
-        mesh_filename="uf850/collision/link_base"  
+        mesh_filename="uf850/collision/link_base_low"  
         origin_xyz="0 0 0" 
         origin_rpy="0 0 0" />
     </link>
@@ -53,12 +53,12 @@
         link_inertial_params="${inertial_params['link1']}" 
         origin_rpy="0 0 0"/>
       <xacro:common_link_visual 
-        mesh_filename="uf850/visual/link1"  
+        mesh_filename="uf850/collision/link1_low"  
         origin_xyz="0 0 0" 
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
       <xacro:common_link_collision 
-        mesh_filename="uf850/collision/link1"  
+        mesh_filename="uf850/collision/link1_low"  
         origin_xyz="0 0 0" 
         origin_rpy="0 0 0" />
     </link>
@@ -82,12 +82,12 @@
         link_inertial_params="${inertial_params['link2']}" 
         origin_rpy="0 0 0"/>
       <xacro:common_link_visual 
-        mesh_filename="uf850/visual/link2"  
+        mesh_filename="uf850/collision/link2_low"  
         origin_xyz="0 0 ${kinematics_params['joint2']['y']}" 
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
       <xacro:common_link_collision 
-        mesh_filename="uf850/collision/link2"  
+        mesh_filename="uf850/collision/link2_low"  
         origin_xyz="0 0 ${kinematics_params['joint2']['y']}" 
         origin_rpy="0 0 0" />
     </link>
@@ -111,12 +111,12 @@
         link_inertial_params="${inertial_params['link3']}" 
         origin_rpy="0 0 0"/>
       <xacro:common_link_visual 
-        mesh_filename="uf850/visual/link3"  
+        mesh_filename="uf850/collision/link3_low"  
         origin_xyz="0 0 0" 
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
       <xacro:common_link_collision 
-        mesh_filename="uf850/collision/link3"  
+        mesh_filename="uf850/collision/link3_low"  
         origin_xyz="0 0 0" 
         origin_rpy="0 0 0" />
     </link>
@@ -140,12 +140,12 @@
         link_inertial_params="${inertial_params['link4']}" 
         origin_rpy="0 0 0"/>
       <xacro:common_link_visual 
-        mesh_filename="uf850/visual/link4"  
+        mesh_filename="uf850/collision/link4_low"  
         origin_xyz="0 0 0" 
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
       <xacro:common_link_collision 
-        mesh_filename="uf850/collision/link4"  
+        mesh_filename="uf850/collision/link4_low"  
         origin_xyz="0 0 0" 
         origin_rpy="0 0 0" />
     </link>
@@ -169,12 +169,12 @@
         link_inertial_params="${inertial_params['link5']}" 
         origin_rpy="0 0 0"/>
       <xacro:common_link_visual 
-        mesh_filename="uf850/visual/link5"  
+        mesh_filename="uf850/collision/link5_low"  
         origin_xyz="0 0 0" 
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
       <xacro:common_link_collision 
-        mesh_filename="uf850/collision/link5"  
+        mesh_filename="uf850/collision/link5_low"  
         origin_xyz="0 0 0" 
         origin_rpy="0 0 0" />
     </link>
@@ -198,7 +198,7 @@
         link_inertial_params="${inertial_params['link6']}" 
         origin_rpy="0 0 0"/>
       <xacro:common_link_visual 
-        mesh_filename="uf850/visual/link6"  
+        mesh_filename="uf850/collision/link6_low"  
         origin_xyz="0 0 0" 
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
