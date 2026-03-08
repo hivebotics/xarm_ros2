@@ -141,51 +141,13 @@
       </joint>
 
       <sensor name="force_torque_sensor">
-        <state_interface name="force.x" />
-        <state_interface name="force.y" />
-        <state_interface name="force.z" />
-        <state_interface name="torque.x" />
-        <state_interface name="torque.y" />
-        <state_interface name="torque.z" />
+          <state_interface name="force.x"/>
+          <state_interface name="force.y"/>
+          <state_interface name="force.z"/>
+          <state_interface name="torque.x"/>
+          <state_interface name="torque.y"/>
+          <state_interface name="torque.z"/>
       </sensor>
-
-      <!-- <hardware>
-              <plugin>gz_ros2_control/GazeboSimSystem</plugin>
-            </hardware> -->
-      <!-- 
-      <joint name="joint_wheel_front_left">
-        <command_interface name="velocity">
-          <param name="min">-1</param>
-          <param name="max">1</param>
-        </command_interface>
-        <state_interface name="position" />
-        <state_interface name="velocity" />
-      </joint>
-      <joint name="joint_wheel_front_right">
-        <command_interface name="velocity">
-          <param name="min">-1</param>
-          <param name="max">1</param>
-        </command_interface>
-        <state_interface name="position" />
-        <state_interface name="velocity" />
-      </joint>
-      <joint name="joint_wheel_back_left">
-        <command_interface name="velocity">
-          <param name="min">-1</param>
-          <param name="max">1</param>
-        </command_interface>
-        <state_interface name="position" />
-        <state_interface name="velocity" />
-      </joint>
-      <joint name="joint_wheel_back_right">
-        <command_interface name="velocity">
-          <param name="min">-1</param>
-          <param name="max">1</param>
-        </command_interface>
-        <state_interface name="position" />
-        <state_interface name="velocity" />
-      </joint> -->
-
 
     </ros2_control>
   </xacro:macro>

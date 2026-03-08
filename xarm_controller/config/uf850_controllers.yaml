@@ -5,9 +5,15 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
+    force_torque_sensor_broadcaster:
+      type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
+
     joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
  
+    joint_trajectory_admittance_controller:
+      type: joint_trajectory_admittance_controller/JointTrajectoryAdmittanceController
+
     streaming_controller:
       type: position_controllers/JointGroupPositionController
 
@@ -16,9 +22,6 @@ controller_manager:
 
     velocity_force_controller:
       type: velocity_force_controller/VelocityForceController
-
-    force_torque_sensor_broadcaster:
-      type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
 
 
 force_torque_sensor_broadcaster:
@@ -38,6 +41,7 @@ force_torque_sensor_broadcaster:
     # To verify simulation and hardware frames are identical, `ros2 run tf2_ros tf2_echo site_name hardware_frame` should return all 0s.
     frame_id: link_ft_base
 
+
 velocity_force_controller:
   ros__parameters:
     # Joint group to control.
@@ -46,7 +50,7 @@ velocity_force_controller:
     ee_frame: link6
     # The frame where the force / torque sensor reading is given.
     # (Needs to exist in the kinematic chain).
-    sensor_frame: link_ft_base
+    sensor_frame: link_ft_tip
     # The force/torque ros2_control hardware interface name.
     ft_sensor_name: force_torque_sensor
     # An optional deadband to apply to the force/torque signal. Set to 0.0 to disable.
@@ -54,25 +58,25 @@ velocity_force_controller:
     ft_torque_deadband: 1.0
     # Maximum joint-space velocities.
     max_joint_velocity:
-      - 1.0
-      - 1.0
-      - 1.0
-      - 1.0
-      - 1.0
-      - 1.0
+      - 10.0
+      - 10.0
+      - 10.0
+      - 10.0
+      - 10.0
+      - 10.0
     # Maximum joint-space accelerations.
     max_joint_acceleration:
-      - 2.0
-      - 2.0
-      - 2.0
-      - 2.0
-      - 2.0
-      - 2.0
+      - 5.0
+      - 5.0
+      - 5.0
+      - 5.0
+      - 5.0
+      - 5.0
     # Maximum Cartesian-space velocities.
     max_cartesian_velocity:
-      - 0.25
-      - 0.25
-      - 0.25
+      - 1.25
+      - 1.25
+      - 1.25
       - 1.0
       - 1.0
       - 1.0
@@ -129,6 +133,32 @@ joint_trajectory_controller:
     interface_name: position
     state_publish_rate: 25.0
     action_monitor_rate: 10.0
+
+
+joint_trajectory_admittance_controller:
+  ros__parameters:
+    joints:
+      - joint1
+      - joint2
+      - joint3
+      - joint4
+      - joint5
+      - joint6
+    base_frame: link_base
+    sensor_frame: link_ft_tip
+    ee_frame: link_eef
+    ft_sensor_name: force_torque_sensor
+    # Acceleration to use for immediate stops (e.g. when cancelling a running trajectory).
+    stop_accelerations: [0.523, 0.523, 0.523, 0.523, 0.523, 0.523]
+    # # Admittance parameters for each Cartesian degree of freedom (x, y, z, roll, pitch, yaw).
+    # # The controller will apply a Cartesian force/torque proportional to the error between the current and desired end-effector pose, multiplied by the corresponding admittance parameter.
+    # # For example, if the end-effector is 0.1m away from the desired pose in the x direction, and the admittance parameter for x is 0.5, the controller will apply a force of 0.1 * 0.5 = 0.05N in the x direction.
+    # admittance_parameters: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    # # Maximum allowed deviation from the desired trajectory before the controller stops the robot for safety. The controller will stop the robot if the error between the current and desired end-effector pose exceeds this threshold.
+    # # Set to    a large value to effectively disable this safety feature, or set to a small value to make the controller more conservative.
+    # max_pose_deviation: 0.1
+
+
 
 joint_velocity_controller:
   ros__parameters:
