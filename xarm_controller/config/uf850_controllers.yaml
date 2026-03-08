@@ -2,12 +2,14 @@ controller_manager:
   ros__parameters:
     update_rate: 150  # Hz
 
+    # This controller is publishes states only. 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
     force_torque_sensor_broadcaster:
       type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
 
+    # These four are robotic arm controllers. You can add other controllers here.
     joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
  
@@ -18,11 +20,14 @@ controller_manager:
       type: position_controllers/JointGroupPositionController
 
     joint_velocity_controller:
-      type: velocity_controllers/JointGroupVelocityController
+      type: joint_velocity_controller/JointVelocityController
 
     velocity_force_controller:
       type: velocity_force_controller/VelocityForceController
 
+    # This is a mobile base AMR controller.
+    platform_joint_velocity_controller: 
+      type: velocity_controllers/JointGroupVelocityController
 
 force_torque_sensor_broadcaster:
   ros__parameters:
@@ -40,7 +45,6 @@ force_torque_sensor_broadcaster:
     # If you share a ros2_control.yaml across hardware and simulation, frame_id should reference the link in your URDF corresponding to the hardware's pose, and your site and URDF link should be identical.
     # To verify simulation and hardware frames are identical, `ros2 run tf2_ros tf2_echo site_name hardware_frame` should return all 0s.
     frame_id: link_ft_base
-
 
 velocity_force_controller:
   ros__parameters:
@@ -104,8 +108,8 @@ velocity_force_controller:
     # downstream.
     # command_joints: []
     # The type of command interface to use. Supported values are "position" and "velocity".
-    command_interfaces: ["position"]
- 
+    command_interfaces: ["position"] 
+
 joint_trajectory_controller:
   ros__parameters:
     command_interfaces:
@@ -134,7 +138,6 @@ joint_trajectory_controller:
     state_publish_rate: 25.0
     action_monitor_rate: 10.0
 
-
 joint_trajectory_admittance_controller:
   ros__parameters:
     joints:
@@ -150,17 +153,36 @@ joint_trajectory_admittance_controller:
     ft_sensor_name: force_torque_sensor
     # Acceleration to use for immediate stops (e.g. when cancelling a running trajectory).
     stop_accelerations: [0.523, 0.523, 0.523, 0.523, 0.523, 0.523]
-    # # Admittance parameters for each Cartesian degree of freedom (x, y, z, roll, pitch, yaw).
-    # # The controller will apply a Cartesian force/torque proportional to the error between the current and desired end-effector pose, multiplied by the corresponding admittance parameter.
-    # # For example, if the end-effector is 0.1m away from the desired pose in the x direction, and the admittance parameter for x is 0.5, the controller will apply a force of 0.1 * 0.5 = 0.05N in the x direction.
-    # admittance_parameters: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-    # # Maximum allowed deviation from the desired trajectory before the controller stops the robot for safety. The controller will stop the robot if the error between the current and desired end-effector pose exceeds this threshold.
-    # # Set to    a large value to effectively disable this safety feature, or set to a small value to make the controller more conservative.
-    # max_pose_deviation: 0.1
-
-
-
+ 
 joint_velocity_controller:
+  ros__parameters:
+    # Joint group to control.
+    planning_group_name: manipulator
+    # Maximum joint-space velocities.
+    max_joint_velocity:
+      - 1.0
+      - 1.0
+      - 1.0
+      - 1.0
+      - 1.0
+      - 1.0
+    # Maximum joint-space accelerations.
+    max_joint_acceleration:
+      - 2.0
+      - 2.0
+      - 2.0
+      - 2.0
+      - 2.0
+      - 2.0
+    command_interfaces: ["position"]
+    # Padding (in radians) to add to joint position limits as a safety margin.
+    joint_limit_position_tolerance: 0.02
+    # Timeout in seconds after which the controller will stop motion if no new commands are received.
+    command_timeout: 0.2
+    # Rate in Hz at which the controller will publish the state.
+    state_publish_rate: 20
+
+platform_joint_velocity_controller:
   ros__parameters:
     joints:
       - joint_wheel_front_right
