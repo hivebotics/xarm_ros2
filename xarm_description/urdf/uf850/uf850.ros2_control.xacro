@@ -12,6 +12,8 @@
     joint4_lower_limit:=${-2.0*pi}  joint4_upper_limit:=${2.0*pi}
     joint5_lower_limit:=${-2.1642}  joint5_upper_limit:=${2.1642}
     joint6_lower_limit:=${-2.0*pi}  joint6_upper_limit:=${2.0*pi}">
+    <xacro:property name="initial_positions_file" value="$(find hivebotics_description)/config/initial_positions.yaml"/>
+    <xacro:property name="initial_positions" value="${xacro.load_yaml(initial_positions_file)}"/>
     <ros2_control name="${prefix}${ros2_control_plugin}" type="system">
       <hardware>
         <plugin>${ros2_control_plugin}</plugin>
@@ -47,7 +49,7 @@
           <param name="max">3.14</param>
         </command_interface>
         <state_interface name="position">
-          <param name="initial_value">0.0</param>
+          <param name="initial_value">${initial_positions['uf850']['joint1']}</param>
         </state_interface>
         <state_interface name="velocity">
           <param name="initial_value">0.0</param>
@@ -64,7 +66,11 @@
           <param name="max">3.14</param>
         </command_interface>
         <state_interface name="position">
+<<<<<<< Updated upstream
           <param name="initial_value">0.035</param>
+=======
+          <param name="initial_value">${initial_positions['uf850']['joint2']}</param>
+>>>>>>> Stashed changes
         </state_interface>
         <state_interface name="velocity">
           <param name="initial_value">0.0</param>
@@ -81,7 +87,7 @@
           <param name="max">3.14</param>
         </command_interface>
         <state_interface name="position">
-          <param name="initial_value">-0.0</param>
+          <param name="initial_value">${initial_positions['uf850']['joint3']}</param>
         </state_interface>
         <state_interface name="velocity">
           <param name="initial_value">0.0</param>
@@ -98,7 +104,7 @@
           <param name="max">3.14</param>
         </command_interface>
         <state_interface name="position">
-          <param name="initial_value">-0.0</param>
+          <param name="initial_value">${initial_positions['uf850']['joint4']}</param>
         </state_interface>
         <state_interface name="velocity">
           <param name="initial_value">0.0</param>
@@ -115,7 +121,7 @@
           <param name="max">3.14</param>
         </command_interface>
         <state_interface name="position">
-          <param name="initial_value">-0.0</param>
+          <param name="initial_value">${initial_positions['uf850']['joint5']}</param>
         </state_interface>
         <state_interface name="velocity">
           <param name="initial_value">0.0</param>
@@ -132,7 +138,7 @@
           <param name="max">3.14</param>
         </command_interface>
         <state_interface name="position">
-          <param name="initial_value">0.0</param>
+          <param name="initial_value">${initial_positions['uf850']['joint6']}</param>
         </state_interface>
         <state_interface name="velocity">
           <param name="initial_value">0.0</param>
