@@ -66,11 +66,7 @@
           <param name="max">3.14</param>
         </command_interface>
         <state_interface name="position">
-<<<<<<< Updated upstream
-          <param name="initial_value">0.035</param>
-=======
           <param name="initial_value">${initial_positions['uf850']['joint2']}</param>
->>>>>>> Stashed changes
         </state_interface>
         <state_interface name="velocity">
           <param name="initial_value">0.0</param>
