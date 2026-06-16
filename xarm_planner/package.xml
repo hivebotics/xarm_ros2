@@ -10,7 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   
   <depend>moveit</depend>
-  <depend>moveit_ros_planning_interface</depend>
+  <depend>moveit_pro_planning_scene_monitor</depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>

@@ -25,7 +25,7 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 find_package(moveit REQUIRED)
-find_package(moveit_ros_planning_interface REQUIRED)
+find_package(moveit_pro_planning_scene_monitor REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -43,7 +43,7 @@ add_library(xarm_planner SHARED
   src/xarm_planner.cpp
 )
 ament_target_dependencies(xarm_planner 
-  moveit_ros_planning_interface
+  moveit_pro_planning_scene_monitor
   ${dependencies}
 )
 
