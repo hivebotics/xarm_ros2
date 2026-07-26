@@ -135,33 +135,12 @@ joint_trajectory_controller:
     state_publish_rate: 25.0
     action_monitor_rate: 10.0
 
-# joint_trajectory_admittance_controller:
-#   ros__parameters:
-#     joints:
-#       - joint1
-#       - joint2
-#       - joint3
-#       - joint4
-#       - joint5
-#       - joint6
-#     base_frame: link_base
-#     sensor_frame: link_ft_tip
-#     ee_frame: link_eef
-#     ft_sensor_name: force_torque_sensor
-#     # Acceleration to use for immediate stops (e.g. when cancelling a running trajectory).
-#     stop_accelerations: [0.523, 0.523, 0.523, 0.523, 0.523, 0.523]
- 
-
 joint_trajectory_admittance_controller:
   ros__parameters:
-    joints:
-      - joint1
-      - joint2
-      - joint3
-      - joint4
-      - joint5
-      - joint6
-    # Joint group to control.
+    # Joint group to control. MoveIt Pro 9 derives the joint chain from this group, so the
+    # controller no longer declares `joints` or `base_frame` -- see the parameters exposed by
+    # libjoint_trajectory_admittance_controller.so and PickNik's 9.3.1 reference config
+    # (core_integration_config/config/control/picknik_ur.ros2_control.yaml).
     planning_group_name: manipulator
     # Specifies the frame/link name of the force torque sensor. Must exist in the robot description.
     sensor_frame: link_ft_tip
