@@ -138,14 +138,12 @@ joint_trajectory_controller:
 joint_trajectory_admittance_controller:
   ros__parameters:
     # Joint group to control. MoveIt Pro 9 derives the joint chain from this group, so the
-    # controller no longer declares `joints` or `base_frame` -- see the parameters exposed by
-    # libjoint_trajectory_admittance_controller.so and PickNik's 9.3.1 reference config
-    # (core_integration_config/config/control/picknik_ur.ros2_control.yaml).
+    # controller no longer declares `joints` or `base_frame`
     planning_group_name: manipulator
-    # Specifies the frame/link name of the force torque sensor. Must exist in the robot description.
-    sensor_frame: link_ft_tip
-    # Specifies the frame/link name of the end-effector frame. Must exist in the robot description.
-    ee_frame: link_eef
+    # Specifies the frame/link names of the force torque sensors. Must exist in the robot description.
+    sensor_frames: [link_ft_tip]
+    # Specifies the frame/link names of the end-effector frames. Must exist in the robot description.
+    ee_frames: [link_eef]
     # The name of the force/torque ros2_control hardware interface which will be used in the admittance calculation.
     # If empty, the controller will run without admittance.
     ft_sensor_name: "force_torque_sensor"
