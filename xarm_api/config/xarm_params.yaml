@@ -23,7 +23,7 @@ ufactory_driver:
       clean_bio_gripper_error: false
       start_record_trajectory: false
       stop_record_trajectory: false
-      ft_sensor_set_zero: false
+      ft_sensor_set_zero: true
       set_linear_track_stop: false
       clean_linear_track_error: false
       open_lite6_gripper: false
@@ -37,8 +37,8 @@ ufactory_driver:
       get_bio_gripper_error: false
       get_reduced_mode: false
       get_report_tau_or_i: false
-      ft_sensor_app_get: false
-      get_ft_sensor_error: false
+      ft_sensor_app_get: true
+      get_ft_sensor_error: true
       get_trajectory_rw_status: false
       get_linear_track_pos: false
       get_linear_track_status: false
@@ -50,20 +50,21 @@ ufactory_driver:
       get_linear_track_sco: false
       set_mode: true
       set_state: true
-      set_collision_sensitivity: false
+      set_collision_sensitivity: true
       set_teach_sensitivity: false
       set_gripper_mode: false
       set_gripper_enable: false
       set_tgpio_modbus_timeout: true
       set_bio_gripper_speed: false
-      set_collision_rebound: false
+      set_collision_rebound: true
       set_fence_mode: false
       set_reduced_mode: false
       set_self_collision_detection: false
       set_simulation_robot: false
       set_baud_checkset_enable: false
       set_report_tau_or_i: false
-      ft_sensor_enable: false
+      ft_sensor_enable: true
+      set_ft_sensor_zero: true
       ft_sensor_app_set: false
       set_linear_track_enable: false
       set_linear_track_speed: false
@@ -84,7 +85,7 @@ ufactory_driver:
       get_position: false
       get_servo_angle: true
       get_position_aa: false
-      get_ft_sensor_data: false
+      get_ft_sensor_data: true
       set_pause_time: false
       set_tcp_jerk: false
       set_tcp_maxacc: false
