@@ -136,8 +136,8 @@ ufactory_driver:
       load_trajectory: false
       playback_trajectory: false
       iden_tcp_load: false
-      ft_sensor_iden_load: false
-      ft_sensor_cali_load: false
+      ft_sensor_iden_load: true
+      ft_sensor_cali_load: true
       config_force_control: false
       set_impedance: false
       set_impedance_mbk: false
