@@ -125,7 +125,6 @@ cartesian_compliance_controller:
       - joint6
     command_interfaces:
       - position
-      - velocity
     stiffness:
       trans_x: 500.0
       trans_y: 500.0
