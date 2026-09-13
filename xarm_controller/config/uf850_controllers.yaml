@@ -41,7 +41,10 @@ force_torque_sensor_broadcaster:
     # The frame the sensor is published in.
     # If you share a ros2_control.yaml across hardware and simulation, frame_id should reference the link in your URDF corresponding to the hardware's pose, and your site and URDF link should be identical.
     # To verify simulation and hardware frames are identical, `ros2 run tf2_ros tf2_echo site_name hardware_frame` should return all 0s.
-    frame_id: link_ft_base
+    # The Gazebo joint sensor is located at joint_ft_tip/link_ft_tip. Labeling
+    # this wrench as link_ft_base would silently shift the torque origin by
+    # 60 mm and invalidate six-axis fingerprints.
+    frame_id: link_ft_tip
 
 velocity_force_controller:
   ros__parameters:
