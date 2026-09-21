@@ -22,6 +22,9 @@ controller_manager:
     velocity_force_controller:
       type: velocity_force_controller/VelocityForceController
 
+    cartesian_compliance_controller:
+      type: cartesian_compliance_controller/CartesianComplianceController
+
     # This is a mobile base AMR controller.
     platform_joint_velocity_controller: 
       type: velocity_controllers/JointGroupVelocityController
@@ -105,7 +108,41 @@ velocity_force_controller:
     # downstream.
     # command_joints: []
     # The type of command interface to use. Supported values are "position" and "velocity".
-    command_interfaces: ["position"] 
+    command_interfaces: ["position"]
+
+cartesian_compliance_controller:
+  ros__parameters:
+    end_effector_link: "link_ft_tip"
+    robot_base_link: "link_base"
+    ft_sensor_ref_link: "link_ft_base"
+    compliance_ref_link: "link_ft_tip"
+    joints:
+      - joint1
+      - joint2
+      - joint3
+      - joint4
+      - joint5
+      - joint6
+    command_interfaces:
+      - position
+    stiffness:
+      trans_x: 500.0
+      trans_y: 500.0
+      trans_z: 500.0
+      rot_x: 100.0
+      rot_y: 100.0
+      rot_z: 100.0
+    solver:
+      error_scale: 0.5
+      iterations: 1
+      publish_state_feedback: True
+    pd_gains:
+      trans_x: {p: 0.05, d: 0.005}
+      trans_y: {p: 0.05, d: 0.005}
+      trans_z: {p: 0.05, d: 0.005}
+      rot_x: {p: 1.5}
+      rot_y: {p: 1.5}
+      rot_z: {p: 1.5}
 
 joint_trajectory_controller:
   ros__parameters:

@@ -8,6 +8,9 @@
         <xacro:if value="${ros2_control_params != ''}">
           <parameters>${ros2_control_params}</parameters>
         </xacro:if>
+        <xacro:if value="${'$(optenv SIM_SCENARIO)' == 'seat_lift'}">
+          <parameters>$(find hivebotics_description)/config/seat_lift_compliance.yaml</parameters>
+        </xacro:if>
         <!-- <controller_manager_node_name>${prefix}controller_manager</controller_manager_node_name> -->
       </plugin>
     </gazebo>
