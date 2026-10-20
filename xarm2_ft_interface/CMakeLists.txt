@@ -15,6 +15,7 @@ find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(realtime_tools REQUIRED)
 
 # Library
 add_library(xarm2_ft_hardware SHARED
@@ -30,6 +31,7 @@ ament_target_dependencies(xarm2_ft_hardware
   rclcpp
   rclcpp_lifecycle
   geometry_msgs
+  realtime_tools
 )
 
 # Plugin export
@@ -50,6 +52,11 @@ install(
 )
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_wrench_topic_sensor_hardware test/test_wrench_topic_sensor_hardware.cpp)
+  target_link_libraries(test_wrench_topic_sensor_hardware xarm2_ft_hardware)
+  ament_target_dependencies(test_wrench_topic_sensor_hardware
+    hardware_interface rclcpp rclcpp_lifecycle geometry_msgs realtime_tools)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 endif()
@@ -62,6 +69,7 @@ ament_export_dependencies(
   rclcpp
   rclcpp_lifecycle
   geometry_msgs
+  realtime_tools
 )
 
 ament_package()
