@@ -8,6 +8,9 @@
 
 #include "xarm_controller/hardware/uf_robot_system_hardware.h"
 
+#include <cmath>
+#include <string>
+
 #define SERVICE_CALL_FAILED 999
 #define SERVICE_IS_PERSISTENT_BUT_INVALID 998
 #define ROBOT_IS_DISCONNECTED -1
@@ -170,6 +173,7 @@ namespace uf_robot_hardware
 
         initialized_ = false;
         reactivate_controller_later_ = false;
+        controllers_to_reactivate_.clear();
 
         read_cnts_ = 0;
         read_max_time_ = 0;
@@ -361,6 +365,27 @@ namespace uf_robot_hardware
         return hardware_interface::return_type::OK;
     }
 
+    void UFRobotSystemHardware::_hold_current_pose(void)
+    {
+        for (size_t i = 0; i < position_cmds_.size(); ++i) {
+            if (!std::isnan(position_states_[i])) {
+                position_cmds_[i] = position_states_[i];
+            }
+            if (i < velocity_cmds_.size()) {
+                velocity_cmds_[i] = 0.0;
+            }
+        }
+    }
+
+    bool UFRobotSystemHardware::_is_safe_to_reactivate(const std::string& controller_name) const
+    {
+        // Platform and unconfigured extra controllers claim interfaces this
+        // hardware does not export. Activating them rejects the whole switch.
+        return controller_name == "joint_state_broadcaster"
+            || controller_name == "joint_trajectory_controller"
+            || controller_name == "force_torque_sensor_broadcaster";
+    }
+
     hardware_interface::return_type UFRobotSystemHardware::write(const rclcpp::Time & time, const rclcpp::Duration &period)
     {
         if (_need_reset()) {
@@ -368,11 +393,20 @@ namespace uf_robot_hardware
             _deactivate_controller();
             return hardware_interface::return_type::OK;
         }
-        initialized_ = true;
+        // First write after e-stop / not-ready: hold the last measured pose.
+        // read() skips that sync when get_joint_states fails (Read() returns 3),
+        // and deactivated controllers can leave position_cmds_ at 0. UF850 zeros
+        // are an arm-up pose, so servo_j toward them slams the arm up (C37/C31).
+        if (!initialized_) {
+            _hold_current_pose();
+            initialized_ = true;
+            RCLCPP_INFO(LOGGER, "[%s] Holding current pose after recover", robot_ip_.c_str());
+        }
         if(reactivate_controller_later_)
         {
             _activate_controller();
             reactivate_controller_later_ = false;
+            _hold_current_pose();
         }
         // std::string pos_str = "[ ";
         // std::string vel_str = "[ ";
@@ -423,45 +457,41 @@ namespace uf_robot_hardware
     void UFRobotSystemHardware::_deactivate_controller(void) {
         if(reactivate_controller_later_)
             return;
-        // RCLCPP_INFO(LOGGER, "DEACTIVATE CONTROLLER!! ");
         int ret = _call_request(client_list_controller_, req_list_controller_, res_list_controller_);
-        bool valid_operation = false;
         if (ret == 0 && res_list_controller_->controller.size() > 0) {
-            req_switch_controller_->activate_controllers.resize(0);
-            req_switch_controller_->deactivate_controllers.resize(res_list_controller_->controller.size());
+            req_switch_controller_->activate_controllers.clear();
+            req_switch_controller_->deactivate_controllers.clear();
+            controllers_to_reactivate_.clear();
             for (uint i = 0; i < res_list_controller_->controller.size(); i++) {
-                // RCLCPP_ERROR(LOGGER, "STATE: %s", res_list_controller_->controller[i].state.c_str());
-                if(res_list_controller_->controller[i].state == std::string("active")){
-                // for situation of initial launch with emg stop pressed, launch file will activate controller and it takes a while
-                    valid_operation = true;
+                if (res_list_controller_->controller[i].state != std::string("active")) {
+                    continue;
                 }
-                // req_switch_controller_->activate_controllers[i] = res_list_controller_->controller[i].name;
-                req_switch_controller_->deactivate_controllers[i] = res_list_controller_->controller[i].name;
+                const auto& name = res_list_controller_->controller[i].name;
+                req_switch_controller_->deactivate_controllers.push_back(name);
+                if (_is_safe_to_reactivate(name)) {
+                    controllers_to_reactivate_.push_back(name);
+                }
             }
             req_switch_controller_->strictness = controller_manager_msgs::srv::SwitchController::Request::BEST_EFFORT;
             req_switch_controller_->timeout = rclcpp::Duration::from_seconds(2.0);
-            if(valid_operation)
+            if (!req_switch_controller_->deactivate_controllers.empty())
             {
                 _call_request(client_switch_controller_, req_switch_controller_, res_switch_controller_);
-                reactivate_controller_later_ = true; // Not setting this indicator until activated controller disabled!
+                reactivate_controller_later_ = true;
             }
         }
     }
 
     void UFRobotSystemHardware::_activate_controller(void) {
-        // RCLCPP_INFO(LOGGER, "ACTIVATE CONTROLLER!! ");
-        int ret = _call_request(client_list_controller_, req_list_controller_, res_list_controller_);
-        if (ret == 0 && res_list_controller_->controller.size() > 0) {
-            req_switch_controller_->deactivate_controllers.resize(0);
-            req_switch_controller_->activate_controllers.resize(res_list_controller_->controller.size());
-            for (uint i = 0; i < res_list_controller_->controller.size(); i++) {
-                req_switch_controller_->activate_controllers[i] = res_list_controller_->controller[i].name;
-                // req_switch_controller_->deactivate_controllers[i] = res_list_controller_->controller[i].name;
-            }
-            req_switch_controller_->strictness = controller_manager_msgs::srv::SwitchController::Request::BEST_EFFORT;
-            req_switch_controller_->timeout = rclcpp::Duration::from_seconds(2.0);
-            _call_request(client_switch_controller_, req_switch_controller_, res_switch_controller_);
+        if (controllers_to_reactivate_.empty()) {
+            return;
         }
+        req_switch_controller_->deactivate_controllers.clear();
+        req_switch_controller_->activate_controllers = controllers_to_reactivate_;
+        req_switch_controller_->strictness = controller_manager_msgs::srv::SwitchController::Request::BEST_EFFORT;
+        req_switch_controller_->timeout = rclcpp::Duration::from_seconds(2.0);
+        _call_request(client_switch_controller_, req_switch_controller_, res_switch_controller_);
+        controllers_to_reactivate_.clear();
         update_goal_state_pub_->publish(update_goal_state_msg_);
     }
 
