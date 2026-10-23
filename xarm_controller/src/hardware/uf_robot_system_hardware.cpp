@@ -8,6 +8,7 @@
 
 #include "xarm_controller/hardware/uf_robot_system_hardware.h"
 
+#include <algorithm>
 #include <cmath>
 #include <string>
 
@@ -172,7 +173,10 @@ namespace uf_robot_hardware
         write_code_ = 0;
 
         initialized_ = false;
+        read_ready_ = false;
         reactivate_controller_later_ = false;
+        last_motion_suppress_valid_ = false;
+        last_motion_suppress_time_ = rclcpp::Time(0, 0, RCL_ROS_TIME);
         controllers_to_reactivate_.clear();
 
         read_cnts_ = 0;
@@ -263,19 +267,15 @@ namespace uf_robot_hardware
         client_list_controller_ = hw_node_->create_client<controller_manager_msgs::srv::ListControllers>("/controller_manager/list_controllers");
         client_switch_controller_ = hw_node_->create_client<controller_manager_msgs::srv::SwitchController>("/controller_manager/switch_controller");
 
+        // Leave NaN until a real encoder read. Seeding 0 is the UF850 arm-up
+        // pose and slams on the first set_servo_angle_j after recover.
         for (uint i = 0; i < position_states_.size(); i++) {
-            if (std::isnan(position_states_[i])) {
-                position_states_[i] = 0;
-                position_cmds_[i] = 0;
-            } else {
+            if (!std::isnan(position_states_[i])) {
                 position_cmds_[i] = position_states_[i];
             }
         }
         for (uint i = 0; i < velocity_states_.size(); i++) {
-            if (std::isnan(velocity_states_[i])) {
-                velocity_states_[i] = 0;
-                velocity_cmds_[i] = 0;
-            } else {
+            if (!std::isnan(velocity_states_[i])) {
                 velocity_cmds_[i] = velocity_states_[i];
             }
         }
@@ -316,15 +316,39 @@ namespace uf_robot_hardware
         // if (read_cnts_ % 6000 == 0) {
         //     RCLCPP_INFO(LOGGER, "[%s] [READ] cnt: %ld, max: %f, mean: %f, failed: %ld", robot_ip_.c_str(), read_cnts_, read_max_time_, read_total_time_ / read_cnts_, read_failed_cnts_);
         // }
-        if (read_code_ == 0 && read_ready_) {
+        if (read_code_ == ROBOT_IS_DISCONNECTED) {
+            read_failed_cnts_ += 1;
+            RCLCPP_ERROR(LOGGER, "[%s] Robot is disconnected, ros shutdown", robot_ip_.c_str());
+            rclcpp::shutdown();
+            exit(1);
+        }
+
+        // Apply measured pose even while C2/not-ready. read_ready_ only gates write().
+        bool got_pose = (read_code_ == 0);
+        if (!got_pose && xarm_driver_.arm != nullptr && xarm_driver_.arm->angles != nullptr) {
+            const int n = std::min(static_cast<int>(info_.joints.size()), 7);
+            for (int j = 0; j < n; j++) {
+                curr_read_position_[j] = xarm_driver_.arm->angles[j];
+            }
+            got_pose = true;
+            read_failed_cnts_ += 1;
+            RCLCPP_INFO_THROTTLE(
+                LOGGER, *node_->get_clock(), 5000,
+                "[%s] Read() returns: %d, using report-thread angles", robot_ip_.c_str(), read_code_);
+        }
+
+        if (got_pose) {
             for (int j = 0; j < info_.joints.size(); j++) {
                 position_states_[j] = curr_read_position_[j];
-				if (use_new) {
+				if (use_new && read_code_ == 0) {
 					velocity_states_[j] = curr_read_velocity_[j];
 					// effort_states_[j] = curr_read_effort_[j];
 				}
 				else {
-					velocity_states_[j] = !initialized_ ? 0.0 : (curr_read_position_[j] - prev_read_position_[j]) / (curr_read_time_.seconds() - prev_read_time_.seconds());
+                    const double dt = curr_read_time_.seconds() - prev_read_time_.seconds();
+					velocity_states_[j] = (!initialized_ || dt <= 0.0)
+                        ? 0.0
+                        : (curr_read_position_[j] - prev_read_position_[j]) / dt;
 					// effort_states_[j] = 0.0;
 				}
             }
@@ -340,25 +364,15 @@ namespace uf_robot_hardware
             }
             xarm_driver_.pub_joint_state(*joint_state_msg_);
 
-            if (!initialized_) {
-                for (uint i = 0; i < position_states_.size(); i++) {
-                    position_cmds_[i] = position_states_[i];
-                    velocity_cmds_[i] = 0.0;
-                }
-            }
+            // Do not copy cmds here. _hold_current_pose() is the only path
+            // that makes position_cmds_ finite.
             memcpy(prev_read_position_, curr_read_position_, sizeof(float) * 7);
             prev_read_time_ = curr_read_time_;
         }
         else {
-            // initialized_ = read_ready_ && _xarm_is_ready_write();
             if (read_code_) {
                 read_failed_cnts_ += 1;
                 RCLCPP_INFO(LOGGER, "[%s] Read() returns: %d", robot_ip_.c_str(), read_code_);
-                if (read_code_ == ROBOT_IS_DISCONNECTED) {
-                    RCLCPP_ERROR(LOGGER, "[%s] Robot is disconnected, ros shutdown", robot_ip_.c_str());
-                    rclcpp::shutdown();
-                    exit(1);
-				}
             }
         }
 
@@ -394,11 +408,14 @@ namespace uf_robot_hardware
             return hardware_interface::return_type::OK;
         }
         // First write after e-stop / not-ready: hold the last measured pose.
-        // read() skips that sync when get_joint_states fails (Read() returns 3),
-        // and deactivated controllers can leave position_cmds_ at 0. UF850 zeros
-        // are an arm-up pose, so servo_j toward them slams the arm up (C37/C31).
         if (!initialized_) {
             _hold_current_pose();
+            if (!_commands_are_finite()) {
+                RCLCPP_WARN_THROTTLE(
+                    LOGGER, *node_->get_clock(), 2000,
+                    "[%s] Waiting for a finite pose before servo commands", robot_ip_.c_str());
+                return hardware_interface::return_type::OK;
+            }
             initialized_ = true;
             RCLCPP_INFO(LOGGER, "[%s] Holding current pose after recover", robot_ip_.c_str());
         }
@@ -422,22 +439,37 @@ namespace uf_robot_hardware
 
         int cmd_ret = 0;
         if (velocity_control_) {
-            for (int i = 0; i < velocity_cmds_.size(); i++) { 
+            bool velocity_cmds_finite = !velocity_cmds_.empty();
+            for (int i = 0; i < velocity_cmds_.size(); i++) {
+                if (!std::isfinite(velocity_cmds_[i])) {
+                    velocity_cmds_finite = false;
+                    break;
+                }
                 cmds_float_[i] = (float)velocity_cmds_[i];
             }
-            // RCLCPP_INFO(LOGGER, "[%s] velocity: %s", robot_ip_.c_str(), vel_str.c_str());
+            if (!velocity_cmds_finite) {
+                RCLCPP_WARN_THROTTLE(
+                    LOGGER, *node_->get_clock(), 2000,
+                    "[%s] Skipping vc_set_joint_velocity: command buffer is not finite", robot_ip_.c_str());
+                return hardware_interface::return_type::OK;
+            }
             cmd_ret = xarm_driver_.arm->vc_set_joint_velocity(cmds_float_, true, VELO_DURATION);
             if (cmd_ret != 0) {
                 RCLCPP_WARN(LOGGER, "[%s] vc_set_joint_velocity, ret=%d", robot_ip_.c_str(), cmd_ret);
             }
         }
         else {
+            if (!_commands_are_finite()) {
+                RCLCPP_WARN_THROTTLE(
+                    LOGGER, *node_->get_clock(), 2000,
+                    "[%s] Skipping set_servo_angle_j: command buffer is not finite", robot_ip_.c_str());
+                return hardware_interface::return_type::OK;
+            }
             for (int i = 0; i < position_cmds_.size(); i++) { 
                 cmds_float_[i] = (float)position_cmds_[i];
             }
             curr_write_time_ = node_->get_clock()->now();
             if (curr_write_time_.seconds() - prev_write_time_.seconds() > 1 || _check_cmds_is_change(prev_cmds_float_, cmds_float_)) {
-                // RCLCPP_INFO(LOGGER, "[%s] positon: %s", robot_ip_.c_str(), pos_str.c_str());
                 cmd_ret = xarm_driver_.arm->set_servo_angle_j(cmds_float_, 0, 0, 0);
                 if (cmd_ret != 0) {
                     RCLCPP_WARN(LOGGER, "[%s] set_servo_angle_j, ret= %d", robot_ip_.c_str(), cmd_ret);
@@ -454,21 +486,56 @@ namespace uf_robot_hardware
         return hardware_interface::return_type::OK;
     }
 
+    bool UFRobotSystemHardware::_is_motion_controller(const std::string& controller_name) const
+    {
+        return controller_name == "joint_trajectory_controller"
+            || controller_name == "velocity_force_controller"
+            || controller_name == "joint_trajectory_admittance_controller"
+            || controller_name == "joint_velocity_controller"
+            || controller_name == "platform_joint_velocity_controller";
+    }
+
+    bool UFRobotSystemHardware::_commands_are_finite(void) const
+    {
+        if (position_cmds_.empty()) {
+            return false;
+        }
+        for (uint i = 0; i < position_cmds_.size(); i++) {
+            if (!std::isfinite(position_cmds_[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     void UFRobotSystemHardware::_deactivate_controller(void) {
-        if(reactivate_controller_later_)
+        const rclcpp::Time now = node_->get_clock()->now();
+        if (last_motion_suppress_valid_ && (now - last_motion_suppress_time_).seconds() < 0.1) {
             return;
+        }
+        last_motion_suppress_time_ = now;
+        last_motion_suppress_valid_ = true;
+
+        if (!client_list_controller_ || !req_list_controller_) {
+            return;
+        }
+
         int ret = _call_request(client_list_controller_, req_list_controller_, res_list_controller_);
         if (ret == 0 && res_list_controller_->controller.size() > 0) {
             req_switch_controller_->activate_controllers.clear();
             req_switch_controller_->deactivate_controllers.clear();
-            controllers_to_reactivate_.clear();
             for (uint i = 0; i < res_list_controller_->controller.size(); i++) {
                 if (res_list_controller_->controller[i].state != std::string("active")) {
                     continue;
                 }
                 const auto& name = res_list_controller_->controller[i].name;
+                if (!_is_motion_controller(name)) {
+                    continue;
+                }
                 req_switch_controller_->deactivate_controllers.push_back(name);
-                if (_is_safe_to_reactivate(name)) {
+                if (_is_safe_to_reactivate(name)
+                    && std::find(controllers_to_reactivate_.begin(), controllers_to_reactivate_.end(), name)
+                        == controllers_to_reactivate_.end()) {
                     controllers_to_reactivate_.push_back(name);
                 }
             }
@@ -477,6 +544,12 @@ namespace uf_robot_hardware
             if (!req_switch_controller_->deactivate_controllers.empty())
             {
                 _call_request(client_switch_controller_, req_switch_controller_, res_switch_controller_);
+                RCLCPP_INFO_THROTTLE(
+                    LOGGER, *node_->get_clock(), 2000,
+                    "[%s] Deactivated %zu motion controller(s) while not ready",
+                    robot_ip_.c_str(), req_switch_controller_->deactivate_controllers.size());
+            }
+            if (!controllers_to_reactivate_.empty()) {
                 reactivate_controller_later_ = true;
             }
         }
