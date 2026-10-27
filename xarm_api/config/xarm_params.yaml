@@ -63,7 +63,7 @@ ufactory_driver:
       set_simulation_robot: false
       set_baud_checkset_enable: false
       set_report_tau_or_i: false
-      ft_sensor_enable: false
+      ft_sensor_enable: true
       ft_sensor_app_set: false
       set_linear_track_enable: false
       set_linear_track_speed: false
