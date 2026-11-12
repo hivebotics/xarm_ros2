@@ -137,6 +137,7 @@ joint_trajectory_controller:
 
 joint_trajectory_admittance_controller:
   ros__parameters:
+    planning_group_name: manipulator
     joints:
       - joint1
       - joint2
