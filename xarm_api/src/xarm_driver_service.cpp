@@ -507,6 +507,7 @@ namespace xarm_api
 
     bool XArmDriver::_set_mode(const std::shared_ptr<xarm_msgs::srv::SetInt16::Request> req, std::shared_ptr<xarm_msgs::srv::SetInt16::Response> res)
     {
+        RCLCPP_WARN(node_->get_logger(), "set_mode request mode=%d: commanding robot STOP before mode change", req->data);
         arm->set_state(XARM_STATE::STOP);
         sleep_milliseconds(10);
         res->ret = arm->set_mode(req->data);
@@ -516,6 +517,7 @@ namespace xarm_api
 
     bool XArmDriver::_set_state(const std::shared_ptr<xarm_msgs::srv::SetInt16::Request> req, std::shared_ptr<xarm_msgs::srv::SetInt16::Response> res)
     {
+        RCLCPP_INFO(node_->get_logger(), "set_state request state=%d", req->data);
         res->ret = arm->set_state(req->data);
         res->message = "data=" + std::to_string(req->data);
         return true;

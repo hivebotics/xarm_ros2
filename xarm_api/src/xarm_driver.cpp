@@ -58,6 +58,15 @@ namespace xarm_api
 
     void XArmDriver::_report_data_callback(XArmReportData *report_data_ptr)
     {
+        if ((curr_state != report_data_ptr->state &&
+            (curr_state > 2 || report_data_ptr->state > 2)) ||
+            curr_mode != report_data_ptr->mode || curr_err != report_data_ptr->err)
+        {
+            RCLCPP_WARN(node_->get_logger(),
+                "Robot report transition: state=%d->%d mode=%d->%d err=%d->%d warn=%d cmdnum=%d",
+                curr_state, report_data_ptr->state, curr_mode, report_data_ptr->mode,
+                curr_err, report_data_ptr->err, report_data_ptr->war, report_data_ptr->cmdnum);
+        }
         // RCLCPP_INFO(node_->get_logger(), "[1] state: %d, error_code: %d", report_data_ptr->state, report_data_ptr->err);
         curr_state = report_data_ptr->state;
         curr_err = report_data_ptr->err;
