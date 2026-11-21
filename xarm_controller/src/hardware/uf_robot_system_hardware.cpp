@@ -489,7 +489,6 @@ namespace uf_robot_hardware
     bool UFRobotSystemHardware::_is_motion_controller(const std::string& controller_name) const
     {
         return controller_name == "joint_trajectory_controller"
-            || controller_name == "cartesian_compliance_controller"
             || controller_name == "velocity_force_controller"
             || controller_name == "joint_trajectory_admittance_controller"
             || controller_name == "joint_velocity_controller"
