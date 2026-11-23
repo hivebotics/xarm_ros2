@@ -605,7 +605,12 @@ namespace uf_robot_hardware
         if (curr_state > 2) {
             if (last_state != curr_state) {
                 last_state = curr_state;
-                RCLCPP_WARN(LOGGER, "[%s] Robot State detected! State: %d", robot_ip_.c_str(), curr_state);
+                const double command_age = prev_write_time_.nanoseconds() > 0
+                    ? node_->get_clock()->now().seconds() - prev_write_time_.seconds() : -1.0;
+                RCLCPP_WARN(LOGGER,
+                    "[%s] Robot State detected! State: %d mode=%d err=%d read_ret=%d write_ret=%d last_servo_command_age_s=%.6f",
+                    robot_ip_.c_str(), curr_state, curr_mode, xarm_driver_.curr_err,
+                    read_code_, write_code_, command_age);
             }
             last_not_ready = true;
             return false;

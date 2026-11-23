@@ -507,6 +507,7 @@ namespace xarm_api
 
     bool XArmDriver::_set_mode(const std::shared_ptr<xarm_msgs::srv::SetInt16::Request> req, std::shared_ptr<xarm_msgs::srv::SetInt16::Response> res)
     {
+        RCLCPP_WARN(node_->get_logger(), "set_mode request mode=%d: commanding robot STOP before mode change", req->data);
         arm->set_state(XARM_STATE::STOP);
         sleep_milliseconds(10);
         res->ret = arm->set_mode(req->data);
@@ -516,6 +517,7 @@ namespace xarm_api
 
     bool XArmDriver::_set_state(const std::shared_ptr<xarm_msgs::srv::SetInt16::Request> req, std::shared_ptr<xarm_msgs::srv::SetInt16::Response> res)
     {
+        RCLCPP_INFO(node_->get_logger(), "set_state request state=%d", req->data);
         res->ret = arm->set_state(req->data);
         res->message = "data=" + std::to_string(req->data);
         return true;
@@ -523,14 +525,20 @@ namespace xarm_api
 
     bool XArmDriver::_set_collision_sensitivity(const std::shared_ptr<xarm_msgs::srv::SetInt16::Request> req, std::shared_ptr<xarm_msgs::srv::SetInt16::Response> res)
     {
+        RCLCPP_WARN(node_->get_logger(), "set_collision_sensitivity request data=%d before_state=%d before_mode=%d before_err=%d",
+            req->data, curr_state, curr_mode, curr_err);
         res->ret = arm->set_collision_sensitivity(req->data);
+        RCLCPP_INFO(node_->get_logger(), "set_collision_sensitivity result ret=%d", res->ret);
         res->message = "data=" + std::to_string(req->data);
         return true;
     }
 
     bool XArmDriver::_set_teach_sensitivity(const std::shared_ptr<xarm_msgs::srv::SetInt16::Request> req, std::shared_ptr<xarm_msgs::srv::SetInt16::Response> res)
     {
+        RCLCPP_WARN(node_->get_logger(), "set_teach_sensitivity request data=%d before_state=%d before_mode=%d before_err=%d",
+            req->data, curr_state, curr_mode, curr_err);
         res->ret = arm->set_teach_sensitivity(req->data);
+        RCLCPP_INFO(node_->get_logger(), "set_teach_sensitivity result ret=%d", res->ret);
         res->message = "data=" + std::to_string(req->data);
         return true;
     }
@@ -613,14 +621,20 @@ namespace xarm_api
 
     bool XArmDriver::_ft_sensor_enable(const std::shared_ptr<xarm_msgs::srv::SetInt16::Request> req, std::shared_ptr<xarm_msgs::srv::SetInt16::Response> res)
     {
+        RCLCPP_WARN(node_->get_logger(), "ft_sensor_enable request data=%d before_state=%d before_mode=%d before_err=%d",
+            req->data, curr_state, curr_mode, curr_err);
         res->ret = arm->ft_sensor_enable(req->data);
+        RCLCPP_INFO(node_->get_logger(), "ft_sensor_enable result ret=%d", res->ret);
         res->message = "data=" + std::to_string(req->data);
         return true; 
     }
 
     bool XArmDriver::_ft_sensor_app_set(const std::shared_ptr<xarm_msgs::srv::SetInt16::Request> req, std::shared_ptr<xarm_msgs::srv::SetInt16::Response> res)
     {
+        RCLCPP_WARN(node_->get_logger(), "ft_sensor_app_set request data=%d before_state=%d before_mode=%d before_err=%d",
+            req->data, curr_state, curr_mode, curr_err);
         res->ret = arm->ft_sensor_app_set(req->data);
+        RCLCPP_INFO(node_->get_logger(), "ft_sensor_app_set result ret=%d", res->ret);
         res->message = "data=" + std::to_string(req->data);
         return true; 
     }
@@ -676,7 +690,10 @@ namespace xarm_api
 
     bool XArmDriver::_motion_enable(const std::shared_ptr<xarm_msgs::srv::SetInt16ById::Request> req, std::shared_ptr<xarm_msgs::srv::SetInt16ById::Response> res)
     {
+        RCLCPP_WARN(node_->get_logger(), "motion_enable request id=%d data=%d before_state=%d before_mode=%d before_err=%d",
+            req->id, req->data, curr_state, curr_mode, curr_err);
         res->ret = arm->motion_enable(req->data, req->id);
+        RCLCPP_INFO(node_->get_logger(), "motion_enable result ret=%d", res->ret);
         res->message = "id=" + std::to_string(req->id) + ", data=" + std::to_string(req->data);
         return true;
     }
@@ -860,7 +877,10 @@ namespace xarm_api
             return true;
         }
             
+        RCLCPP_WARN(node_->get_logger(), "set_gravity_direction request gravity=[%f,%f,%f] before_state=%d before_mode=%d before_err=%d",
+            req->datas[0], req->datas[1], req->datas[2], curr_state, curr_mode, curr_err);
         res->ret = arm->set_gravity_direction(&req->datas[0]);
+        RCLCPP_INFO(node_->get_logger(), "set_gravity_direction result ret=%d", res->ret);
         std::string tmp = "";
         for (int i = 0; i < 3; i++) {
             tmp += (i == 0 ? "" : ", ") + std::to_string(req->datas[i]);
@@ -875,7 +895,10 @@ namespace xarm_api
             res->ret = PARAM_ERROR;
             return true;
         }
+        RCLCPP_WARN(node_->get_logger(), "set_tcp_offset request offset=[%f,%f,%f,%f,%f,%f] before_state=%d before_mode=%d before_err=%d",
+            req->datas[0], req->datas[1], req->datas[2], req->datas[3], req->datas[4], req->datas[5], curr_state, curr_mode, curr_err);
         res->ret = arm->set_tcp_offset(&req->datas[0]);
+        RCLCPP_INFO(node_->get_logger(), "set_tcp_offset result ret=%d", res->ret);
         std::string tmp = "";
         for (int i = 0; i < 6; i++) {
             tmp += (i == 0 ? "" : ", ") + std::to_string(req->datas[i]);
@@ -890,7 +913,10 @@ namespace xarm_api
             res->ret = PARAM_ERROR;
             return true;
         }
+        RCLCPP_WARN(node_->get_logger(), "set_world_offset request offset=[%f,%f,%f,%f,%f,%f] before_state=%d before_mode=%d before_err=%d",
+            req->datas[0], req->datas[1], req->datas[2], req->datas[3], req->datas[4], req->datas[5], curr_state, curr_mode, curr_err);
         res->ret = arm->set_world_offset(&req->datas[0]);
+        RCLCPP_INFO(node_->get_logger(), "set_world_offset result ret=%d", res->ret);
         std::string tmp = "";
         for (int i = 0; i < 6; i++) {
             tmp += (i == 0 ? "" : ", ") + std::to_string(req->datas[i]);
@@ -924,7 +950,10 @@ namespace xarm_api
             res->ret = PARAM_ERROR;
             return true;
         }
+        RCLCPP_WARN(node_->get_logger(), "set_tcp_load request weight=%f cog=[%f,%f,%f] before_state=%d before_mode=%d before_err=%d",
+            req->weight, req->center_of_gravity[0], req->center_of_gravity[1], req->center_of_gravity[2], curr_state, curr_mode, curr_err);
         res->ret = arm->set_tcp_load(req->weight, &req->center_of_gravity[0]);
+        RCLCPP_INFO(node_->get_logger(), "set_tcp_load result ret=%d", res->ret);
         std::string tmp = "";
         for (int i = 0; i < 3; i++) {
             tmp += (i == 0 ? "" : ", ") + std::to_string(req->center_of_gravity[i]);
